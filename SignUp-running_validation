@@ -1,0 +1,336 @@
+import { useNavigation } from "@react-navigation/native";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Pressable,
+  useWindowDimensions,
+  Animated,
+} from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { Logo, ArrowBlue } from "../../assets";
+import { RootRoutes } from "../../navigation/routes";
+import CheckBox from "@react-native-community/checkbox";
+import { login, signup, authStoreActions } from "../../../store";
+import { useDispatch, useSelector } from "react-redux";
+import { Dispatch } from "redux";
+import { styles } from "./styles";
+import { AnimatedImageBackGround } from "../animatedImageBackground";
+
+export const SignUp = () => {
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
+  const [companyName, setCompanyName] = useState<string>("");
+  const [emailAddress, setEmailAddress] = useState<string>("");
+  const [checkboxState, setCheckboxState] = React.useState<boolean>(false);
+  const navigation = useNavigation<any>();
+  const apiUp = true;
+  const dispatch = useDispatch<Dispatch<any>>();
+  const { signUpData, signUpStatus, loginData, loginStatus } = useSelector(
+    (state: any) => ({
+      signUpData: state.authStore.signUpData,
+      signUpStatus: state.authStore.signUpStatus,
+      loginData: state.authStore.loginData,
+      loginStatus: state.authStore.loginStatus,
+    })
+  );
+  const [emailValid, setEmailValid] = useState(true);
+  const [checkboxValid, setCheckboxValid] = useState(true);
+  const [firstNameValid, setFirstNameValid] = useState(true);
+  const [lastNameValid, setLastNameValid] = useState(true);
+  const [companyNameValid, setCompanyNameValid] = useState(true);
+  const [isValidationDone, setIsValidationDone] = useState(false);
+  const [isFormTouched, setIsFormTouched] = useState(false);
+
+  const [isFirstNameTouched, setIsFirstNameTouched] = useState(false);
+  const [isLastNameTouched, setIsLastNameTouched] = useState(false);
+  const [isCompanyNameTouched, setIsCompanyNameTouched] = useState(false);
+  const [isEmailTouched, setIsEmailTouched] = useState(false);
+
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (loginData.data !== undefined) {
+      dispatch(authStoreActions.setLoadingStatus("not loaded"));
+      dispatch(authStoreActions.setLoginData({}));
+      navigation.navigate(RootRoutes.Verification_Screen, {
+        userEmail: emailAddress,
+      });
+    }
+    return;
+  }, [loginData]);
+
+  useEffect(() => {
+    if (signUpData.data !== undefined) {
+      dispatch(login({ email: emailAddress ?? "" }));
+      dispatch(authStoreActions.setSignUpStatus("not loaded"));
+      dispatch(authStoreActions.setSignUpData({}));
+    }
+    return;
+  }, [signUpData]);
+
+
+  useEffect(() => {
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    setFirstNameValid(firstName !== "");
+    setLastNameValid(lastName !== "");
+    setCompanyNameValid(companyName !== "");
+    setEmailValid(emailAddress !== "" && emailRegex.test(emailAddress));
+    setCheckboxValid(checkboxState);
+  }, [firstName, lastName, companyName, emailAddress, checkboxState]);
+
+  useEffect(() => {
+    // Check if all validations are true
+    const allValidationsTrue =
+      firstNameValid &&
+      lastNameValid &&
+      companyNameValid &&
+      emailValid &&
+      checkboxValid;
+
+    // Set the validation state for the button
+    setIsValidationDone(allValidationsTrue);
+  }, [firstNameValid, lastNameValid, companyNameValid, emailValid, checkboxValid]);
+
+
+  const signUpValidation = () => {
+    setIsFormTouched(true);
+
+    setIsValidationDone(true);
+  };
+
+  const buttonBackgroundColor = isValidationDone ? "#00C851" : "grey";
+
+  const signUp = async () => {
+    apiUp
+      ? dispatch(
+        signup({
+          firstName: firstName,
+          lastName: lastName,
+          email: emailAddress,
+          organizationDomain: companyName,
+        })
+      )
+      : navigation.navigate(RootRoutes.Verification_Screen);
+  };
+
+  useEffect(() => {
+    const opacityAnimation = Animated.sequence([
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+    ]);
+    Animated.parallel([opacityAnimation]).start();
+    return () => {
+      opacityAnimation.stop();
+    };
+  }, []);
+
+
+
+
+  return (
+    <View style={styles.container}>
+      <AnimatedImageBackGround />
+      <View style={styles.logo_Style}>
+        <Logo />
+      </View>
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1, marginBottom: 10 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View
+          style={{
+            justifyContent: "flex-end",
+            alignItems: "center",
+            width: "100%",
+            marginTop: "20%",
+            flex: 1,
+          }}
+        >
+          <Text
+            style={styles.Sign_In_To_ConfigueeX_Text_Style}
+            numberOfLines={1}
+          >
+            Sign Up to Wynn
+          </Text>
+          <View style={styles.shadowProp}>
+            <TextInput
+              onChangeText={(e: string) => {
+                setFirstName(e);
+              }}
+              placeholderTextColor={"#8AA2CE"}
+              placeholder="First name"
+              style={styles.textStyle}
+              allowFontScaling={false}
+              textContentType={"givenName"}
+              // contextMenuHidden={true}
+              value={firstName}
+              onBlur={() => setIsFormTouched(true)}
+            />
+          </View>
+          {
+            <Text style={{ color: "red", width: "80%" }}>
+              {!firstNameValid && isFirstNameTouched ? "Enter a valid first name" : " "}
+            </Text>
+          }
+          <View style={styles.shadowProp}>
+            <TextInput
+              onChangeText={(e: string) => {
+                setLastName(e);
+              }}
+              placeholderTextColor={"#8AA2CE"}
+              placeholder="Last name"
+              style={styles.textStyle}
+              allowFontScaling={false}
+              textContentType={"givenName"}
+              // contextMenuHidden={true}
+              value={lastName}
+              onBlur={() => setIsFirstNameTouched(true)}
+            />
+          </View>
+          {
+            <Text style={{ color: "red", width: "80%" }}>
+              {!lastNameValid && isLastNameTouched ? "Enter a valid last name" : " "}
+            </Text>
+          }
+          <View style={styles.shadowProp}>
+            <TextInput
+              onChangeText={(e: string) => {
+                setCompanyName(e);
+              }}
+              placeholderTextColor={"#8AA2CE"}
+              placeholder="Comapany name"
+              style={styles.textStyle}
+              allowFontScaling={false}
+              textContentType={"organizationName"}
+              // contextMenuHidden={true}
+              value={companyName}
+              onBlur={() => setIsCompanyNameTouched(true)}
+            />
+          </View>
+          {
+            <Text style={{ color: "red", width: "80%" }}>
+              {!companyNameValid && isCompanyNameTouched ? "Enter a valid company/organization name" : " "}
+            </Text>
+          }
+          <View style={styles.shadowProp}>
+            <TextInput
+              onChangeText={(e: string) => {
+                setEmailAddress(e.toLowerCase());
+              }}
+              placeholderTextColor={"#8AA2CE"}
+              placeholder="Enter email address"
+              style={styles.textStyle}
+              allowFontScaling={false}
+              textContentType={"emailAddress"}
+              // contextMenuHidden={true}
+              value={emailAddress}
+              autoCapitalize="none"
+              onBlur={() => setIsEmailTouched(true)}
+            />
+          </View>
+          {
+            <Text style={{ color: "red", width: "80%" }}>
+              {!emailValid && isEmailTouched ? "Enter a valid email id" : " "}
+            </Text>
+          }
+          <View style={styles.checkBoxStyle}>
+            <CheckBox
+              boxType="square"
+              onChange={() => setCheckboxState(!checkboxState)}
+              value={checkboxState}
+              onFillColor="#3866E6"
+              onTintColor="#DADADA"
+              onCheckColor="#FFFFFF"
+              style={{ width: 20, height: 20 }}
+
+            />
+            <Text allowFontScaling={false} style={styles.Text_Style}>
+              I've read and accept the
+            </Text>
+            <Pressable
+              onPress={() => navigation.navigate(RootRoutes.Term_And_Condition)}
+            >
+              <Text
+                allowFontScaling={false}
+                style={[
+                  styles.createAccount_Text_Style,
+                  {
+                    fontFamily: "PlusJakartaSans-Medium",
+                  },
+                ]}
+              >
+                Terms & Conditions
+              </Text>
+            </Pressable>
+          </View>
+          {
+            <Text style={{ color: "red", width: "80%" }}>
+              {!checkboxValid && isFormTouched ? "Accept the Terms and Conditions" : " "}
+            </Text>
+          }
+          <TouchableOpacity
+            style={{
+              width: "87%",
+              backgroundColor: buttonBackgroundColor,
+              marginTop: 12,
+              alignItems: "center",
+              borderRadius: 5,
+              height: 50,
+              justifyContent: "center",
+
+            }}
+            onPress={() => {
+              if (isValidationDone) {
+                // Call the signUp function here or perform your signup process
+                signUp()
+              } else {
+                signUpValidation();
+              }
+            }}
+            disabled={!isValidationDone}
+          >
+            <Text allowFontScaling={false} style={styles.testSignUp}>
+              Sign Up
+            </Text>
+          </TouchableOpacity>
+
+          <View
+            style={{
+              flexDirection: "row",
+              marginHorizontal: "13%",
+              // paddingTop: "20%",
+              marginTop: "20%",
+              alignItems: "center",
+            }}
+          ></View>
+        </View>
+
+        <View style={styles.bottom_Style}>
+          <Text style={styles.need_Configure_X_Text_Style}>
+            Already have an account?
+          </Text>
+          <View style={styles.createAccountStyle}>
+            <Pressable
+              style={styles.createAccountStyle}
+              onPress={() => navigation.navigate(RootRoutes.SignIn_Screen)}
+            >
+              <Text style={styles.createAccount_Text_Style}>Sign In</Text>
+              <ArrowBlue />
+            </Pressable>
+          </View>
+        </View>
+      </KeyboardAwareScrollView>
+    </View>
+  );
+};
